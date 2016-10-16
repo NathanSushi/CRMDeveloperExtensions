@@ -6,6 +6,7 @@ using Microsoft.Xrm.Client;
 using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Tooling.Connector;
 using OutputLogger;
 using System;
 using System.ComponentModel.Design;
@@ -100,19 +101,19 @@ namespace ReportDeployer
             Guid reportId = GetMapping(projectItem, selectedConnection);
             if (reportId == Guid.Empty) return;
 
-            CrmConnection connection = CrmConnection.Parse(selectedConnection.ConnectionString);
+            CrmServiceClient connection = new CrmServiceClient(selectedConnection.ConnectionString);
 
             UpdateAndPublishSingle(connection, projectItem, reportId);
         }
 
-        private void UpdateAndPublishSingle(CrmConnection connection, ProjectItem projectItem, Guid reportId)
+        private void UpdateAndPublishSingle(CrmServiceClient connection, ProjectItem projectItem, Guid reportId)
         {
             try
             {
                 _dte.StatusBar.Text = "Deploying report...";
                 _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationDeploy);
 
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     Entity report = new Entity("report") { Id = reportId };
                     if (!File.Exists(projectItem.FileNames[1])) return;

@@ -7,6 +7,7 @@ using Microsoft.Xrm.Client;
 using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Tooling.Connector;
 using OutputLogger;
 using System;
 using System.ComponentModel.Design;
@@ -126,7 +127,8 @@ namespace WebResourceDeployer
             Guid webResourceId = GetMapping(projectItem, selectedConnection);
             if (webResourceId == Guid.Empty) return;
 
-            CrmConnection connection = CrmConnection.Parse(selectedConnection.ConnectionString);
+            CrmServiceClient connection = new CrmServiceClient(selectedConnection.ConnectionString);
+            //CrmConnection connection = CrmConnection.Parse(selectedConnection.ConnectionString);
 
             //Check if < CRM 2011 UR12 (ExecuteMutliple)
             Version version = Version.Parse(selectedConnection.Version);
@@ -136,7 +138,7 @@ namespace WebResourceDeployer
                 UpdateAndPublishMultiple(connection, projectItem, webResourceId);
         }
 
-        private void UpdateAndPublishMultiple(CrmConnection connection, ProjectItem projectItem, Guid webResourceId)
+        private void UpdateAndPublishMultiple(CrmServiceClient connection, ProjectItem projectItem, Guid webResourceId)
         {
             try
             {
@@ -171,7 +173,7 @@ namespace WebResourceDeployer
                 requests.Add(pubRequest);
                 emRequest.Requests = requests;
 
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     _dte.StatusBar.Text = "Updating & publishing web resource...";
                     _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationDeploy);
@@ -208,14 +210,14 @@ namespace WebResourceDeployer
             _dte.StatusBar.Animate(false, vsStatusAnimation.vsStatusAnimationDeploy);
         }
 
-        private void UpdateAndPublishSingle(CrmConnection connection, ProjectItem projectItem, Guid webResourceId)
+        private void UpdateAndPublishSingle(CrmServiceClient connection, ProjectItem projectItem, Guid webResourceId)
         {
             try
             {
                 _dte.StatusBar.Text = "Updating & publishing web resource...";
                 _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationDeploy);
 
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     string publishXml = "<importexportxml><webresources>";
                     Entity webResource = new Entity("webresource") { Id = webResourceId };

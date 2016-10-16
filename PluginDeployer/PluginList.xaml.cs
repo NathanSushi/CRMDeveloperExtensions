@@ -7,6 +7,7 @@ using Microsoft.Xrm.Client;
 using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 using NuGet.VisualStudio;
 using OutputLogger;
 using PluginDeployer.Models;
@@ -176,7 +177,7 @@ namespace PluginDeployer
 
             string connString = ConnPane.SelectedConnection.ConnectionString;
             if (connString == null) return;
-            CrmConnection connection = CrmConnection.Parse(connString);
+            CrmServiceClient connection = new CrmServiceClient(connString);
 
             LockMessage.Content = "Updating...";
             LockOverlay.Visibility = Visibility.Visible;
@@ -191,7 +192,7 @@ namespace PluginDeployer
             _dte.StatusBar.Clear();
         }
 
-        private bool UpdateCrmAssembly(AssemblyItem assemblyItem, CrmConnection connection)
+        private bool UpdateCrmAssembly(AssemblyItem assemblyItem, CrmServiceClient connection)
         {
             _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationDeploy);
 
@@ -352,7 +353,7 @@ namespace PluginDeployer
 
         private async Task<bool> GetPlugins(string connString)
         {
-            CrmConnection connection = CrmConnection.Parse(connString);
+            CrmServiceClient connection = new CrmServiceClient(connString);
 
             _dte.StatusBar.Text = "Connecting to CRM and getting assemblies...";
             _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationSync);
@@ -416,11 +417,11 @@ namespace PluginDeployer
             return true;
         }
 
-        private EntityCollection RetrieveAssembliesFromCrm(CrmConnection connection)
+        private EntityCollection RetrieveAssembliesFromCrm(CrmServiceClient connection)
         {
             try
             {
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     QueryExpression query = new QueryExpression
                     {

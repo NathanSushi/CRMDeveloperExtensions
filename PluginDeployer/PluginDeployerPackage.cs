@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.Xrm.Client;
 using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Tooling.Connector;
 using OutputLogger;
 using PluginDeployer.Models;
 using System;
@@ -102,12 +103,12 @@ namespace PluginDeployer
             Guid assemblyId = SelectedAssemblyItem.Item.AssemblyId;
             if (assemblyId == Guid.Empty) return;
 
-            CrmConnection connection = CrmConnection.Parse(selectedConnection.ConnectionString);
+            CrmServiceClient connection = new CrmServiceClient(selectedConnection.ConnectionString);
 
             UpdateAndPublishSingle(connection, project);
         }
 
-        private void UpdateAndPublishSingle(CrmConnection connection, Project project)
+        private void UpdateAndPublishSingle(CrmServiceClient connection, Project project)
         {
             try
             {

@@ -9,6 +9,7 @@ using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 using OutputLogger;
 using ReportDeployer.Models;
 using System;
@@ -364,7 +365,7 @@ namespace ReportDeployer
         private async Task<bool> GetReports(string connString)
         {
             string projectName = ConnPane.SelectedProject.Name;
-            CrmConnection connection = CrmConnection.Parse(connString);
+            CrmServiceClient connection = new CrmServiceClient(connString);
 
             _dte.StatusBar.Text = "Connecting to CRM and getting reports...";
             _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationSync);
@@ -414,11 +415,11 @@ namespace ReportDeployer
             return true;
         }
 
-        private EntityCollection RetrieveReportsFromCrm(CrmConnection connection)
+        private EntityCollection RetrieveReportsFromCrm(CrmServiceClient connection)
         {
             try
             {
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     QueryExpression query = new QueryExpression
                     {
@@ -747,8 +748,8 @@ namespace ReportDeployer
 
             try
             {
-                CrmConnection connection = CrmConnection.Parse(connString);
-                using (OrganizationService orgService = new OrganizationService(connection))
+                CrmServiceClient connection = new CrmServiceClient(connString);
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     Entity report = orgService.Retrieve("report", reportId,
                         new ColumnSet("bodytext", "filename"));
@@ -842,7 +843,7 @@ namespace ReportDeployer
 
             string connString = ConnPane.SelectedConnection.ConnectionString;
             if (connString == null) return;
-            CrmConnection connection = CrmConnection.Parse(connString);
+            CrmServiceClient connection = new CrmServiceClient(connString);
 
             LockMessage.Content = "Deploying...";
             LockOverlay.Visibility = Visibility.Visible;
@@ -863,7 +864,7 @@ namespace ReportDeployer
             _dte.StatusBar.Clear();
         }
 
-        private bool UpdateAndPublishMultiple(List<ReportItem> items, Project project, CrmConnection connection)
+        private bool UpdateAndPublishMultiple(List<ReportItem> items, Project project, CrmServiceClient connection)
         {
             //CRM 2011 UR12+
             try
@@ -946,7 +947,7 @@ namespace ReportDeployer
             }
         }
 
-        private bool UpdateAndPublishSingle(List<ReportItem> items, Project project, CrmConnection connection)
+        private bool UpdateAndPublishSingle(List<ReportItem> items, Project project, CrmServiceClient connection)
         {
             //CRM 2011 < UR12
             _dte.StatusBar.Text = "Updating report(s)...";
@@ -954,7 +955,7 @@ namespace ReportDeployer
 
             try
             {
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     foreach (var reportItem in items)
                     {

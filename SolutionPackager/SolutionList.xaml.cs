@@ -6,7 +6,9 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Client;
 using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 using OutputLogger;
 using SolutionPackager.Models;
 using System;
@@ -31,7 +33,7 @@ namespace SolutionPackager
         private readonly DTE _dte;
         private readonly DTE2 _dte2;
         private readonly Logger _logger;
-        private static OrganizationService _orgService;
+        private static OrganizationServiceProxy _orgService;
 
         public SolutionList()
         {
@@ -387,9 +389,9 @@ namespace SolutionPackager
         {
             try
             {
-                CrmConnection connection = CrmConnection.Parse(connString);
+                CrmServiceClient connection = new CrmServiceClient(connString);
 
-                using (_orgService = new OrganizationService(connection))
+                using (_orgService = connection.OrganizationServiceProxy)
                 {
                     QueryExpression query = new QueryExpression
                     {
@@ -920,11 +922,11 @@ namespace SolutionPackager
         {
             try
             {
-                CrmConnection connection = CrmConnection.Parse(connString);
+                CrmServiceClient connection = new CrmServiceClient(connString);
                 // Hardcode connection timeout to one-hour to support large solutions.
-                connection.Timeout = new TimeSpan(1, 0, 0);
-
-                using (_orgService = new OrganizationService(connection))
+                //connection.Timeout = new TimeSpan(1, 0, 0);
+                
+                using (_orgService = connection.OrganizationServiceProxy)
                 {
                     ExportSolutionRequest request = new ExportSolutionRequest
                     {

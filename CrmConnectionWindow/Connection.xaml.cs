@@ -2,6 +2,7 @@
 using Microsoft.Xrm.Client;
 using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Tooling.Connector;
 using OutputLogger;
 using System;
 using System.ServiceModel;
@@ -158,8 +159,8 @@ namespace CrmConnectionWindow
         {
             try
             {
-                CrmConnection connection = CrmConnection.Parse(connectionString);
-                using (OrganizationService orgService = new OrganizationService(connection))
+                CrmServiceClient connection = new CrmServiceClient(connectionString);
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     WhoAmIRequest wRequest = new WhoAmIRequest();
                     WhoAmIResponse wResponse = (WhoAmIResponse)orgService.Execute(wRequest);

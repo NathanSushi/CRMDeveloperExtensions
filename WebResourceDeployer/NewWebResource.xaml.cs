@@ -19,12 +19,14 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using CommonResources.Models;
 using WebResourceDeployer.Models;
+using Microsoft.Xrm.Tooling.Connector;
+using Microsoft.Xrm.Sdk.Client;
 
 namespace WebResourceDeployer
 {
     public partial class NewWebResource
     {
-        private static OrganizationService _orgService;
+        private static OrganizationServiceProxy _orgService;
         private readonly CrmConn _connection;
         private readonly Project _project;
         private readonly Logger _logger;
@@ -62,9 +64,9 @@ namespace WebResourceDeployer
             try
             {
                 List<CrmSolution> solutions = new List<CrmSolution>();
-
-                CrmConnection connection = CrmConnection.Parse(_connection.ConnectionString);
-                using (_orgService = new OrganizationService(connection))
+                CrmServiceClient connection = new CrmServiceClient(_connection.ConnectionString);
+                //CrmConnection connection = CrmConnection.Parse(_connection.ConnectionString);
+                using (_orgService = connection.OrganizationServiceProxy)
                 {
                     QueryExpression query = new QueryExpression
                     {
@@ -203,9 +205,9 @@ namespace WebResourceDeployer
         {
             try
             {
-                CrmConnection connection = CrmConnection.Parse(_connection.ConnectionString);
+                CrmServiceClient connection = new CrmServiceClient(_connection.ConnectionString);
 
-                using (_orgService = new OrganizationService(connection))
+                using (_orgService = connection.OrganizationServiceProxy)
                 {
                     Entity webResource = new Entity("webresource");
                     webResource["name"] = prefix + name;

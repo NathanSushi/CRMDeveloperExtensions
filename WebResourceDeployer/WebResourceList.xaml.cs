@@ -11,6 +11,7 @@ using Microsoft.Xrm.Client.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 using OutputLogger;
 using System;
 using System.Collections.Generic;
@@ -682,7 +683,7 @@ namespace WebResourceDeployer
         private async Task<bool> GetWebResources(string connString)
         {
             string projectName = ConnPane.SelectedProject.Name;
-            CrmConnection connection = CrmConnection.Parse(connString);
+            CrmServiceClient connection = new CrmServiceClient(connString);
 
             _dte.StatusBar.Text = "Connecting to CRM and getting web resources...";
             _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationSync);
@@ -744,12 +745,12 @@ namespace WebResourceDeployer
             return true;
         }
 
-        private EntityCollection RetrieveWebResourcesFromCrm(CrmConnection connection)
+        private EntityCollection RetrieveWebResourcesFromCrm(CrmServiceClient connection)
         {
             EntityCollection results = null;
             try
             {
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     int pageNumber = 1;
                     string pagingCookie = null;
@@ -1203,8 +1204,8 @@ namespace WebResourceDeployer
 
             try
             {
-                CrmConnection connection = CrmConnection.Parse(connString);
-                using (OrganizationService orgService = new OrganizationService(connection))
+                CrmServiceClient connection = new CrmServiceClient(connString);
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     Entity webResource = orgService.Retrieve("webresource", webResourceId,
                         new ColumnSet("content", "name", "webresourcetype"));
@@ -1334,7 +1335,7 @@ namespace WebResourceDeployer
 
             string connString = ConnPane.SelectedConnection.ConnectionString;
             if (connString == null) return;
-            CrmConnection connection = CrmConnection.Parse(connString);
+            CrmServiceClient connection = new CrmServiceClient(connString);
 
             LockMessage.Content = "Publishing...";
             LockOverlay.Visibility = Visibility.Visible;
@@ -1355,7 +1356,7 @@ namespace WebResourceDeployer
             _dte.StatusBar.Clear();
         }
 
-        private bool UpdateAndPublishMultiple(List<WebResourceItem> items, Project project, CrmConnection connection)
+        private bool UpdateAndPublishMultiple(List<WebResourceItem> items, Project project, CrmServiceClient connection)
         {
             //CRM 2011 UR12+
             try
@@ -1465,7 +1466,7 @@ namespace WebResourceDeployer
             }
         }
 
-        private bool UpdateAndPublishSingle(List<WebResourceItem> items, Project project, CrmConnection connection)
+        private bool UpdateAndPublishSingle(List<WebResourceItem> items, Project project, CrmServiceClient connection)
         {
             //CRM 2011 < UR12
             _dte.StatusBar.Text = "Updating & publishing web resource(s)...";
@@ -1681,8 +1682,8 @@ namespace WebResourceDeployer
                 string connString = ConnPane.SelectedConnection.ConnectionString;
                 if (string.IsNullOrEmpty(connString)) return;
 
-                CrmConnection connection = CrmConnection.Parse(connString);
-                using (OrganizationService orgService = new OrganizationService(connection))
+                CrmServiceClient connection = new CrmServiceClient(connString);
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     _dte.StatusBar.Text = "Downloading file for compare...";
                     _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationSync);
@@ -1887,7 +1888,7 @@ namespace WebResourceDeployer
             LockOverlay.Visibility = Visibility.Visible;
 
             List<CrmSolution> solutions = new List<CrmSolution>();
-            CrmConnection connection = CrmConnection.Parse(ConnPane.SelectedConnection.ConnectionString);
+            CrmServiceClient connection = new CrmServiceClient(ConnPane.SelectedConnection.ConnectionString);
 
             EntityCollection results = await System.Threading.Tasks.Task.Run(() => RetrieveSolutionsFromCrm(connection));
             if (results == null)
@@ -1929,11 +1930,11 @@ namespace WebResourceDeployer
             return true;
         }
 
-        private EntityCollection RetrieveSolutionsFromCrm(CrmConnection connection)
+        private EntityCollection RetrieveSolutionsFromCrm(CrmServiceClient connection)
         {
             try
             {
-                using (OrganizationService orgService = new OrganizationService(connection))
+                using (var orgService = connection.OrganizationServiceProxy)
                 {
                     QueryExpression query = new QueryExpression
                     {
